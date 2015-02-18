@@ -25,7 +25,7 @@ type Philosopher struct {
 func NewPhilosopher(left *Fork, right *Fork, id int) *Philosopher {
 	p := &Philosopher{ Id: id, ThinkCount: 0 }
 
-	// Bread and butter, solution to Philosopeher Dining problem
+	// Bread and butter, solution to Philosopher Dining problem
 	if left.Id < right.Id {
 		p.First = left
 		p.Second = right
@@ -36,10 +36,8 @@ func NewPhilosopher(left *Fork, right *Fork, id int) *Philosopher {
 	return p
 }
 
-// When 2 forks are free, acquire forks and start eating
-// After eating, think for a random period of time, and repeat
 func (p *Philosopher) run() {
-	for { // Forever
+	for { // Run forever
 
 		// Think some
 		p.ThinkCount += 1
@@ -48,14 +46,14 @@ func (p *Philosopher) run() {
 		}
 		time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
 
-		// Attempt and acquire locks two froks
+		// Attempt and acquire locks on two froks
 		p.First.mutex.Lock()
 		p.Second.mutex.Lock()
 
 		// Eat some
 		time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
 
-		// Release forks, and repeat
+		// Release forks, and get back to thining
 		p.First.mutex.Unlock()
 		p.Second.mutex.Unlock()
 	}
