@@ -55,9 +55,10 @@ func main() {
 	
 	for {
 		conn, _ := listener.Accept()
+		// Up the pool count
 		wg.Add(1)
+		// Invoke new thread to handle new connection
 		go NewConnectionHandler(conn, &wg).Run()
-		
 	}
 	wg.Wait()
 }
