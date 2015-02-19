@@ -22,7 +22,12 @@ func NewExecutorService(maxPoolSize int) *ExecutorService {
 		Jobs: make(chan *ConnectionHandler),
 	}
 	for i:=0; i<e.MaxPoolSize; i++ {
-		go Worker(e.Jobs)
+		// go Worker(e.Jobs)
+		go func(){
+			for job := range e.Jobs {
+				job.Run()
+			}
+		}()
 	}
 	return e
 }
@@ -49,7 +54,6 @@ func NewConnectionHandler(conn net.Conn) *ConnectionHandler {
 
 func (h *ConnectionHandler) Run() {
 	// On exit of function
-	// - Mark thread as done
 	// - Close connection to socket
 	defer h.Conn.Close()
 	
@@ -65,7 +69,6 @@ func (h *ConnectionHandler) Run() {
 		if err2 != nil {
 			break
 		}
-
 		// Capture "exit" request from client
 		match, _ := regexp.MatchString("^exit", string(buffer[0:]))
 		if match {
