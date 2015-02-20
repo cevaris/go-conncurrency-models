@@ -1,50 +1,14 @@
 package main
 
 import (
-	"sync"
 	"net"
 	"regexp"
 	"runtime"
+	"github.com/cevaris/go_concurrency_models/threads_and_locks/executor_service"
 )
-
-// Notes
-// - http://jan.newmarch.name/go/socket/chapter-socket.html#heading_toc_j_19
-// - http://stackoverflow.com/questions/18405023/how-would-you-define-a-pool-of-goroutines-to-be-executed-at-once-in-golang?answertab=votes#tab-top
-
-type ExecutorService struct {
-	MaxPoolSize int
-	Jobs chan *ConnectionHandler
-}
-
-func NewExecutorService(maxPoolSize int) *ExecutorService {
-	e := &ExecutorService{
-		MaxPoolSize: maxPoolSize,
-		Jobs: make(chan *ConnectionHandler),
-	}
-	for i:=0; i<e.MaxPoolSize; i++ {
-		// go Worker(e.Jobs)
-		go func(){
-			for job := range e.Jobs {
-				job.Run()
-			}
-		}()
-	}
-	return e
-}
-
-func Worker(jobs chan *ConnectionHandler) {
-	for job := range jobs {
-		job.Run()
-	}
-}
-
-func (e *ExecutorService) execute(handler *ConnectionHandler) {
-	e.Jobs <- handler
-}
 
 type ConnectionHandler struct {
 	Conn net.Conn
-	Pool *sync.WaitGroup
 }
 
 // ConnectionHandler constructor
@@ -78,16 +42,14 @@ func (h *ConnectionHandler) Run() {
 }
 
 func main() {
-
 	poolSize := runtime.NumCPU() * 2
-
-	executor := NewExecutorService(poolSize)
+	executor := executor_service.NewExecutorService(poolSize)
 
 	tcpAddr, _ := net.ResolveTCPAddr("tcp4", "localhost:4567")
 	listener, _ := net.ListenTCP("tcp", tcpAddr)
 	
 	for {
 		conn, _ := listener.Accept()
-		executor.execute(NewConnectionHandler(conn))
+		executor.Execute(NewConnectionHandler(conn))
 	}
 }

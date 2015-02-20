@@ -48,4 +48,4 @@ func main() {
 	// Wait for counters to finish
 	wg.Wait()
 	fmt.Println(counter.Count)
-}
+} 
