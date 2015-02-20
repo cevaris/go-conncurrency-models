@@ -42,6 +42,7 @@ func (h *ConnectionHandler) Run() {
 }
 
 func main() {
+	// Create thread pool using ExecutorService-like interface
 	poolSize := runtime.NumCPU() * 2
 	executor := executor_service.NewExecutorService(poolSize)
 
