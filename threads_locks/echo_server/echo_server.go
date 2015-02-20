@@ -4,7 +4,7 @@ import (
 	"net"
 	"regexp"
 	"runtime"
-	"github.com/cevaris/go_concurrency_models/threads_and_locks/executor_service"
+	"github.com/cevaris/go_concurrency_models/threads_locks/executor_service"
 )
 
 type ConnectionHandler struct {

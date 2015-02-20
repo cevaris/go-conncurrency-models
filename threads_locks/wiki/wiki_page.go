@@ -1,12 +1,12 @@
 package wiki
 
 import (
-	_ "github.com/cevaris/go_concurrency_models/threads_and_locks/parser"
+	"github.com/cevaris/go_concurrency_models/threads_and_locks/parser"
 )
 
 type WikiPage struct {
-	Title string
-	Text string
+	Title string `xml:title`
+	Text string `xml:text`
 }
 
 func NewWikiPage(title string, text string) *WikiPage {
