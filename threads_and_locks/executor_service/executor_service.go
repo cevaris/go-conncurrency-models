@@ -1,31 +1,35 @@
 package executor_service
 
-type Worker interface {
+// Interface for wrapping work
+type Job interface {
 	Run()
 }
 
 type ExecutorService struct {
-	MaxPoolSize int
-	Jobs chan Worker
+	MaxPoolSize int  // Max parallel jobs executing
+	Jobs chan Job    // Channel queuing all jobs
 }
 
 func NewExecutorService(maxPoolSize int) *ExecutorService {
 	e := &ExecutorService{
 		MaxPoolSize: maxPoolSize,
-		Jobs: make(chan Worker),
+		Jobs: make(chan Job),
 	}
+	// Dispatch N workers to distrubte the jobs
 	for i:=0; i<e.MaxPoolSize; i++ {
-		go func(){
-			for job := range e.Jobs {
-				job.Run()
-			}
-		}()
+		go Worker(e.Jobs)
 	}
 	return e
 }
 
+func Worker(jobs chan Job){
+	for job := range jobs { // Grab next job
+		// Execute work
+		job.Run()
+	}
+}
 
-
-func (e *ExecutorService) Execute(toDo Worker) {
+func (e *ExecutorService) Execute(toDo Job) {
+	// Enqueue incoming job
 	e.Jobs <- toDo
 }
