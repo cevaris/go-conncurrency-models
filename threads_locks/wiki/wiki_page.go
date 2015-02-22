@@ -9,3 +9,15 @@ type WikiPage struct {
 func NewWikiPage(title string, text string) *WikiPage {
 	return &WikiPage{Title: title, Text: text}
 }
+
+func (p *WikiPage) IsPoisonPill() bool {
+	return false
+}
+
+func (p* WikiPage) GetTitle() string {
+	return p.Title
+}
+
+func (p* WikiPage) GetText() string {
+	return p.Text
+}
