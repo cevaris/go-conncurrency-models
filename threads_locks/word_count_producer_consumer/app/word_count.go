@@ -3,17 +3,18 @@ package main
 import (
 	"fmt"
 	"flag"
-	// "sync"
+	"sync" 
 	// "runtime"
+	"time"
+
 	"github.com/cevaris/go_concurrency_models"
 	"github.com/cevaris/go_concurrency_models/threads_locks/word_count"
 	"github.com/cevaris/go_concurrency_models/threads_locks/wiki"
 )
 
-// var WORKER_SIZE int64 = 100
-var SAMPLE_SIZE int64 = 10 * 1000
-// var mutex *sync.Mutex = &sync.Mutex{}
-var total int64 = 0
+var WORKER_SIZE int64 = 100
+var SAMPLE_SIZE int64 = 100 * 1000
+var mutex *sync.Mutex = &sync.Mutex{}
 var counts map[string]int64 = make(map[string]int64)
 
 
@@ -22,6 +23,9 @@ var filePath = flag.String( "infile",
 	"Input file path")
 
 func countWord(word string) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	
 	if val, ok := counts[word]; ok {
 		counts[word] = val + 1
 	} else {
@@ -29,19 +33,20 @@ func countWord(word string) {
 	}
 }
 
-func pageHandler(pages <-chan *wiki.WikiPage) {
+func pageHandler(pages <-chan *wiki.WikiPage, wg *sync.WaitGroup) {
 	for page := range pages {
 		words := word_count.NewWords(page.GetText())
-		_ = words
 		for word := range words.Iterator() {
 			countWord(word)
 		}
-	}	
+	}
+	wg.Done()
 }
 
 func main() {
 	// maxCPUs := runtime.NumCPU() - 1
 	// runtime.GOMAXPROCS(maxCPUs)
+	start := time.Now().Unix()
 	
 	flag.Parse()
 	
@@ -50,27 +55,21 @@ func main() {
 
 	parser := wiki.NewWikiParser(SAMPLE_SIZE, file)
 	pages := parser.Parse()
-	pageHandler(pages)
 
+	wg := &sync.WaitGroup{}
+	wg.Add(int(WORKER_SIZE))
+	for i := 0; i < int(WORKER_SIZE); i++ {
+		go pageHandler(pages, wg)
+	}
+	wg.Wait()
+
+	end := time.Now().Unix()
+	duration := end - start
+	fmt.Println(duration)
 	// for k, v := range counts {
 	// 	fmt.Println(k, v)
 	// }
 
-	// wg := &sync.WaitGroup{}
-	// wg.Add(WORKER_SIZE)
-	// for i := 0; i < int(wp.NumOfReaders); i++ {
-	// 	go wp.ParseWorker(i)
-	// }
-	
-	// parser.ReadWaitGroup.Wait()
-
-	// var wg sync.WaitGroup
-	// for i := 0; i < int(WORKER_SIZE); i++ {
-	// 	wg.Add(1)
-	// 	go parser.ParseWorker(i)
-	// }
-	// wg.Wait()
-	// fmt.Println("Read", total, "pages")
 	fmt.Println("done.")
 }
 
