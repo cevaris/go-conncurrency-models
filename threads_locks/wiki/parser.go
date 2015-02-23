@@ -13,7 +13,7 @@ var PAGE_ELEMENT string = "page"
 
 type WikiParser struct {
 	FileHandler *os.File
-	Pages chan WikiPage
+	Pages chan *WikiPage
 	NumToParse int64
 	NumOfReaders int64
 	ReadBufferSize int
@@ -34,8 +34,8 @@ func NewWikiParser(numOfPages int64, file *os.File) *WikiParser {
 	}
 }
 
-func (wp *WikiParser) Parse() <-chan WikiPage {
-	wp.Pages = make(chan WikiPage, wp.ReadBufferSize)
+func (wp *WikiParser) Parse() <-chan *WikiPage {
+	wp.Pages = make(chan *WikiPage, wp.ReadBufferSize)
 
 	wp.ReadWaitGroup.Add(int(wp.NumOfReaders))
 	for i := 0; i < int(wp.NumOfReaders); i++ {
@@ -48,43 +48,57 @@ func (wp *WikiParser) Parse() <-chan WikiPage {
 
 func parseRoutine(wp *WikiParser){
 	decoder := xml.NewDecoder(wp.FileHandler)
-	for {
+	for wp.hasNext() {
+
 		t, _ := decoder.Token()
-		if t == nil || wp.TotalParsed == wp.NumToParse {
+		if t == nil {
 			break
 		}
-		// Inspect the type of the token just read.
+
 		switch se := t.(type) {
 		case xml.StartElement:
 			if se.Name.Local == PAGE_ELEMENT {
 				var p WikiPage
 				decoder.DecodeElement(&p, &se)
-				wp.Pages <- p
+				wp.Pages <- &p
 			}
 		default:
 			continue
 		}
 	}
+	close(wp.Pages)
+}
+
+func (wp *WikiParser) hasNext() bool {
+	wp.ReadMutex.Lock()
+	defer wp.ReadMutex.Unlock()
+	// Check if reached limit
+	fmt.Printf("\r%d/%d", wp.TotalParsed, wp.NumToParse)
+	if  wp.TotalParsed >= wp.NumToParse {
+		return false
+	}
+	wp.TotalParsed++
+	return true
 }
 
 func (wp* WikiParser) ParseWorker(id int) {
 	defer wp.ReadWaitGroup.Done()
 	for page := range wp.Pages {
 
-		wp.ReadMutex.Lock()
-		wp.TotalParsed++
+		// wp.ReadMutex.Lock()
+		// wp.TotalParsed++
 		_ = page
 
-		if wp.TotalParsed % 1000 == 0 {
-			fmt.Printf("\r%d\t%d", id, wp.TotalParsed)
-		}
-		// Need to offset the number of goroutines which have already
-		// grabbed a page off the channel
-		if wp.TotalParsed > wp.NumToParse - wp.NumOfReaders {
-			wp.ReadMutex.Unlock()
-			break
-		} 
+		// if wp.TotalParsed % 1000 == 0 {
+		// fmt.Printf("\r%d\t%d", id, wp.TotalParsed)
+		// }
+		// // Need to offset the number of goroutines which have already
+		// // grabbed a page off the channel
+		// if wp.TotalParsed > wp.NumToParse - wp.NumOfReaders {
+		// 	wp.ReadMutex.Unlock()
+		// 	break
+		// } 
 
-		wp.ReadMutex.Unlock()
+		// wp.ReadMutex.Unlock()
 	}	
 }
