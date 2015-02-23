@@ -32,9 +32,10 @@ func countWord(word string) {
 func pageHandler(pages <-chan *wiki.WikiPage) {
 	for page := range pages {
 		words := word_count.NewWords(page.GetText())
-		for word := range words.Iterator() {
-			countWord(word)
-		}		
+		_ = words
+		// for word := range words.Iterator() {
+		// 	countWord(word)
+		// }		
 	}	
 }
 
