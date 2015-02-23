@@ -2,7 +2,7 @@ package wiki
 
 import (
 	"encoding/xml"
-	// "fmt"
+	"fmt"
 	"os"
 )
 
@@ -38,7 +38,12 @@ func parseRoutine(wp *WikiParser){
 	decoder := xml.NewDecoder(wp.FileHandler)
 	// While we have not reached our target Page count
 	for wp.TotalParsed <= wp.NumToParse {
-		// fmt.Printf("\r%d/%d", wp.TotalParsed, wp.NumToParse)
+
+		if wp.TotalParsed % 10000 == 0 {
+			// fmt.Printf("\r%d/%d", wp.TotalParsed, wp.NumToParse)
+			fmt.Printf("\r%d", wp.TotalParsed)
+		}
+		
 		wp.TotalParsed++
 
 		t, _ := decoder.Token()

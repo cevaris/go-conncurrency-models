@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"flag"
+	"math"
 	"sync" 
 	"runtime"
 
@@ -12,8 +13,9 @@ import (
 	"github.com/cevaris/go_concurrency_models/threads_locks/wiki"
 )
 
-var WORKER_SIZE int64 = 250
-var SAMPLE_SIZE int64 = 100 * 1000
+var WORKER_SIZE int64 = 2500
+// var SAMPLE_SIZE int64 = 100 * 1000
+var SAMPLE_SIZE int64 = math.MaxInt64
 var mutex *sync.Mutex = &sync.Mutex{}
 var counts map[string]int64 = make(map[string]int64)
 
@@ -25,6 +27,7 @@ var filePath = flag.String( "infile",
 
 
 func pageHandler(pages <-chan *wiki.WikiPage, wg *sync.WaitGroup) {
+	// Each goroutine gets it own map counter
 	c := word_count_batch_sync_map.NewCounter()
 	for page := range pages {
 		words := word_count.NewWords(page.GetText())
@@ -33,6 +36,8 @@ func pageHandler(pages <-chan *wiki.WikiPage, wg *sync.WaitGroup) {
 		}
 	}
 
+	// Need to sync local counts to source, need to protect
+	// main map counts variable.
 	mutex.Lock()
 	c.MergeMap(counts)
 	mutex.Unlock()
@@ -63,9 +68,9 @@ func main() {
 	}
 	wg.Wait()
 	
-	// for k, v := range counts {
-	// 	fmt.Println(k, v)
-	// }
+	for k, v := range counts {
+		fmt.Println(k, v)
+	}
 
 	fmt.Println("done.")
 }
