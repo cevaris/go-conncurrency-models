@@ -4,7 +4,7 @@ package wiki
 
 import (
 	"encoding/xml"
-	"fmt"
+	// "fmt"
 	"os"
 	"sync"
 )
@@ -26,7 +26,6 @@ func NewWikiParser(numOfPages int64, file *os.File) *WikiParser {
 	return &WikiParser{
 		FileHandler: file,		
 		ReadMutex: &sync.Mutex{},
-		ReadWaitGroup: &sync.WaitGroup{},
 		NumToParse: numOfPages,
 		ReadBufferSize: 500,
 		TotalParsed: 0,
@@ -36,12 +35,6 @@ func NewWikiParser(numOfPages int64, file *os.File) *WikiParser {
 
 func (wp *WikiParser) Parse() <-chan *WikiPage {
 	wp.Pages = make(chan *WikiPage, wp.ReadBufferSize)
-
-	wp.ReadWaitGroup.Add(int(wp.NumOfReaders))
-	for i := 0; i < int(wp.NumOfReaders); i++ {
-		go wp.ParseWorker(i)
-	}
-	
 	go parseRoutine(wp)
 	return wp.Pages
 }
@@ -73,7 +66,7 @@ func (wp *WikiParser) hasNext() bool {
 	wp.ReadMutex.Lock()
 	defer wp.ReadMutex.Unlock()
 	// Check if reached limit
-	fmt.Printf("\r%d/%d", wp.TotalParsed, wp.NumToParse)
+	// fmt.Printf("\r%d/%d", wp.TotalParsed, wp.NumToParse)
 	if  wp.TotalParsed >= wp.NumToParse {
 		return false
 	}
@@ -81,24 +74,4 @@ func (wp *WikiParser) hasNext() bool {
 	return true
 }
 
-func (wp* WikiParser) ParseWorker(id int) {
-	defer wp.ReadWaitGroup.Done()
-	for page := range wp.Pages {
 
-		// wp.ReadMutex.Lock()
-		// wp.TotalParsed++
-		_ = page
-
-		// if wp.TotalParsed % 1000 == 0 {
-		// fmt.Printf("\r%d\t%d", id, wp.TotalParsed)
-		// }
-		// // Need to offset the number of goroutines which have already
-		// // grabbed a page off the channel
-		// if wp.TotalParsed > wp.NumToParse - wp.NumOfReaders {
-		// 	wp.ReadMutex.Unlock()
-		// 	break
-		// } 
-
-		// wp.ReadMutex.Unlock()
-	}	
-}
