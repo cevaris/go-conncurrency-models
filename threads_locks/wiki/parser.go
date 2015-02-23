@@ -2,9 +2,8 @@ package wiki
 
 import (
 	"encoding/xml"
-	"fmt"
+	// "fmt"
 	"os"
-	// "sync"
 )
 
 var PAGE_ELEMENT string = "page"
@@ -13,16 +12,13 @@ type WikiParser struct {
 	FileHandler *os.File
 	Pages chan *WikiPage
 	NumToParse int64
-	// NumOfReaders int64
 	ReadBufferSize int
-	// ReadMutex *sync.Mutex
 	TotalParsed int64
 }
 
 func NewWikiParser(numOfPages int64, file *os.File) *WikiParser {
 	return &WikiParser{
 		FileHandler: file,		
-		// ReadMutex: &sync.Mutex{},
 		NumToParse: numOfPages,
 		ReadBufferSize: 500,
 		TotalParsed: 0,
@@ -40,7 +36,10 @@ func (wp *WikiParser) Parse() <-chan *WikiPage {
 
 func parseRoutine(wp *WikiParser){
 	decoder := xml.NewDecoder(wp.FileHandler)
-	for wp.hasNext() {
+	// While we have not reached our target Page count
+	for wp.TotalParsed <= wp.NumToParse {
+		// fmt.Printf("\r%d/%d", wp.TotalParsed, wp.NumToParse)
+		wp.TotalParsed++
 
 		t, _ := decoder.Token()
 		if t == nil {
@@ -65,18 +64,3 @@ func parseRoutine(wp *WikiParser){
 	// Close channel after done reading the file
 	close(wp.Pages)
 }
-
-// Returns true if we have not reached our target page count
-func (wp *WikiParser) hasNext() bool {
-	// wp.ReadMutex.Lock()
-	// defer wp.ReadMutex.Unlock()
-	// Check if reached limit
-	fmt.Printf("\r%d/%d", wp.TotalParsed, wp.NumToParse)
-	if  wp.TotalParsed >= wp.NumToParse {
-		return false
-	}
-	wp.TotalParsed++
-	return true
-}
-
-
