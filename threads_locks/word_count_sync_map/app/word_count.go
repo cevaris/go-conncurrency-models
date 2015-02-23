@@ -5,7 +5,6 @@ import (
 	"flag"
 	"sync" 
 	"runtime"
-	// "time"
 
 	"github.com/cevaris/go_concurrency_models"
 	"github.com/cevaris/go_concurrency_models/threads_locks/word_count"
