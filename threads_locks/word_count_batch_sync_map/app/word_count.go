@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"flag"
-	"math"
+	// "math"
 	"sync" 
 	"runtime"
 
@@ -14,8 +14,8 @@ import (
 )
 
 var WORKER_SIZE int64 = 2500
-// var SAMPLE_SIZE int64 = 100 * 1000
-var SAMPLE_SIZE int64 = math.MaxInt64
+var SAMPLE_SIZE int64 = 100 * 1000
+// var SAMPLE_SIZE int64 = math.MaxInt64
 var mutex *sync.Mutex = &sync.Mutex{}
 var counts map[string]int64 = make(map[string]int64)
 
@@ -46,11 +46,13 @@ func pageHandler(pages <-chan *wiki.WikiPage, wg *sync.WaitGroup) {
 }
 
 func main() {
+	// Start, stop and print runtime duration
+	wallClock := go_concurrency_models.NewWallClock()
+	wallClock.StartClock()
+	defer wallClock.StopClock()
+	// Use all but 2 CPU to execute work in parallel
 	maxCPUs := runtime.NumCPU() - 2
 	runtime.GOMAXPROCS(maxCPUs)
-
-	go_concurrency_models.StartClock()
-	defer go_concurrency_models.StopClock()
 	
 	flag.Parse()
 	
@@ -58,16 +60,18 @@ func main() {
 	defer file.Close()
 
 	parser := wiki.NewWikiParser(SAMPLE_SIZE, file)
-	parser.ReadBufferSize = 1000
+	parser.ReadBufferSize = 10000
 	pages := parser.Parse()
 
+	// Create worker pool and wait till work is completed
 	wg := &sync.WaitGroup{}
 	wg.Add(int(WORKER_SIZE))
 	for i := 0; i < int(WORKER_SIZE); i++ {
 		go pageHandler(pages, wg)
 	}
 	wg.Wait()
-	
+
+	// Print all results
 	for k, v := range counts {
 		fmt.Println(k, v)
 	}
