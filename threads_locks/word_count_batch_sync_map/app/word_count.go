@@ -1,3 +1,4 @@
+
 package main
 
 import (
@@ -29,6 +30,7 @@ var filePath = flag.String( "infile",
 func pageHandler(pages <-chan *wiki.WikiPage, wg *sync.WaitGroup) {
 	// Each goroutine gets it own map counter
 	c := word_count_batch_sync_map.NewCounter()
+
 	for page := range pages {
 		words := word_count.NewWords(page.GetText())
 		for word := range words.Iterator() {
@@ -40,8 +42,8 @@ func pageHandler(pages <-chan *wiki.WikiPage, wg *sync.WaitGroup) {
 	// main map counts variable.
 	mutex.Lock()
 	c.MergeMap(counts)
-	mutex.Unlock()
 	
+
 	wg.Done()
 }
 
@@ -53,9 +55,9 @@ func main() {
 	// Use all but 2 CPU to execute work in parallel
 	maxCPUs := runtime.NumCPU() - 2
 	runtime.GOMAXPROCS(maxCPUs)
-	
+
 	flag.Parse()
-	
+
 	file := go_concurrency_models.OpenFileOrPanic(*filePath)
 	defer file.Close()
 

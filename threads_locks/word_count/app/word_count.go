@@ -8,7 +8,7 @@ import (
 	"github.com/cevaris/go_concurrency_models/threads_locks/wiki"
 )
 
-var SAMPLE_SIZE int64 = 10 * 1000
+var SAMPLE_SIZE int64 = 100 * 1000
 var total int64 = 0
 var counts map[string]int64 = make(map[string]int64)
 
@@ -37,6 +37,11 @@ func pageHandler(pages <-chan *wiki.WikiPage) {
 }
 
 func main() {
+	// Start, stop and print runtime duration
+	wallClock := go_concurrency_models.NewWallClock()
+	wallClock.StartClock()
+	defer wallClock.StopClock()
+	
 	flag.Parse()
 	
 	file := go_concurrency_models.OpenFileOrPanic(*filePath)

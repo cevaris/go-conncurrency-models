@@ -44,12 +44,14 @@ func pageHandler(pages <-chan *wiki.WikiPage, wg *sync.WaitGroup) {
 }
 
 func main() {
+	// Start, stop and print runtime duration
+	wallClock := go_concurrency_models.NewWallClock()
+	wallClock.StartClock()
+	defer wallClock.StopClock()
+	
 	maxCPUs := runtime.NumCPU() - 1
 	runtime.GOMAXPROCS(maxCPUs)
 
-	go_concurrency_models.StartClock()
-	defer go_concurrency_models.StopClock()
-	
 	flag.Parse()
 	
 	file := go_concurrency_models.OpenFileOrPanic(*filePath)
